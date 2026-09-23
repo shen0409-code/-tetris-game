@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>經典俄羅斯方塊 Tetris - 穩定迴圈版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #121214;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            background-color: #1e1e24;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid #2d2d38;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+        }
+
+        canvas {
+            background-color: #0d0d11;
+            border: 2px solid #333344;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            width: 200px;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            color: #00f0f0;
+            text-shadow: 0 0 8px rgba(0, 240, 240, 0.4);
+            margin-bottom: 10px;
+        }
+
+        .stat-box {
+            background-color: #15151a;
+            border: 1px solid #2a2a35;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            text-align: center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-box.combo-active {
+            border-color: #ff0055;
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+        }
+
+        .stat-title {
+            font-size: 11px;
+            color: #aaaaaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .combo-value {
+            color: #ffcc00;
+            font-size: 22px;
+        }
+
+        .controls-info {
+            background-color: #15151a;
+            border: 1px solid #2a2a35;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #cccccc;
+            line-height: 1.5;
+        }
+
+        .controls-info h3 {
+            font-size: 13px;
+            color: #ff7f00;
+            margin-bottom: 4px;
+        }
+
+        .controls-info ul {
+            list-style: none;
+        }
+
+        .key {
+            background-color: #2a2a35;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #fff;
+            font-size: 11px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ff0055, #ff5500);
+            border: none;
+            color: white;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            box-shadow: 0 4px 12px rgba(255, 0, 85, 0.3);
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.hidden {
+            display: none;
+        }
+
+        .overlay-content {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .overlay-content h2 {
+            font-size: 32px;
+            color: #ff3366;
+            margin-bottom: 12px;
+            text-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+        }
+
+        .overlay-content p.score-text {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .overlay-content p.encouragement-text {
+            font-size: 15px;
+            color: #ffcc00;
+            margin-bottom: 20px;
+            line-height: 1.4;
+            font-weight: 500;
+            text-shadow: 0 0 6px rgba(255, 204, 0, 0.3);
+        }
+
+        @media (max-width: 550px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .side-panel {
+                width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="canvas-wrapper">
+            <canvas id="tetris" width="300" height="600"></canvas>
+            
+            <div id="game-over-overlay" class="overlay hidden">
+                <div class="overlay-content">
+                    <h2>GAME OVER</h2>
+                    <p class="score-text">最終得分：<span id="final-score">0</span></p>
+                    <p id="encouragement-text" class="encouragement-text">差一點！再挑戰一次吧！</p>
+                    <button id="restart-overlay-btn" class="btn">再次挑戰</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div>
+                <h1>TETRIS</h1>
+                
+                <div class="stat-box">
+                    <div class="stat-title">分數 SCORE</div>
+                    <div id="score" class="stat-value">0</div>
+                </div>
+
+                <div id="combo-box" class="stat-box">
+                    <div class="stat-title">連擊 COMBO</div>
+                    <div id="combo" class="stat-value combo-value">0</div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-title">消除行數 LINES</div>
+                    <div id="lines" class="stat-value">0</div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-title">等級 LEVEL</div>
+                    <div id="level" class="stat-value">1</div>
+                </div>
+
+                <div class="controls-info">
+                    <h3>操作說明</h3>
+                    <ul>
+                        <li><span class="key">↑</span> 旋轉方塊</li>
+                        <li><span class="key">←</span> <span class="key">→</span> 左右移動</li>
+                        <li><span class="key">↓</span> 加速下降</li>
+                        <li><span class="key">Space</span> 直接落底</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button id="restart-btn" class="btn">重新開始遊戲</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        
+        context.scale(30, 30);
+
+        const COLS = 10;
+        const ROWS = 20;
+
+        const COLORS = [
+            null,
+            '#00f0f0', // I
+            '#0000f0', // J
+            '#ff7f00', // L
+            '#ffff00', // O
+            '#00f000', // S
+            '#a000f0', // T
+            '#f00000'  // Z
+        ];
+
+        const ENCOURAGEMENT_MESSAGES = [
+            "差一點！再挑戰一次吧！",
+            "再來一次，挑戰更高分！",
+            "別放棄，你一定可以突破紀錄！",
+            "這次很接近了，再試一次！",
+            "每一次挑戰都會更進步！",
+            "準備好了嗎？下一場突破自己！"
+        ];
+
+        function createPiece(type) {
+            if (type === 'I') {
+                return [
+                    [0, 1, 0, 0],
+                    [0, 1, 0, 0],
+                    [0, 1, 0, 0],
+                    [0, 1, 0, 0],
+                ];
+            } else if (type === 'J') {
+                return [
+                    [0, 2, 0],
+                    [0, 2, 0],
+                    [2, 2, 0],
+                ];
+            } else if (type === 'L') {
+                return [
+                    [0, 3, 0],
+                    [0, 3, 0],
+                    [0, 3, 3],
+                ];
+            } else if (type === 'O') {
+                return [
+                    [4, 4],
+                    [4, 4],
+                ];
+            } else if (type === 'S') {
+                return [
+                    [0, 5, 5],
+                    [5, 5, 0],
+                    [0, 0, 0],
+                ];
+            } else if (type === 'T') {
+                return [
+                    [0, 6, 0],
+                    [6, 6, 6],
+                    [0, 0, 0],
+                ];
+            } else if (type === 'Z') {
+                return [
+                    [7, 7, 0],
+                    [0, 7, 7],
+                    [0, 0, 0],
+                ];
+            }
+        }
+
+        function createMatrix(w, h) {
+            const matrix = [];
+            while (h--) {
+                matrix.push(new Array(w).fill(0));
+            }
+            return matrix;
+        }
+
+        const arena = createMatrix(COLS, ROWS);
+
+        const player = {
+            pos: {x: 0, y: 0},
+            matrix: null,
+            score: 0,
+            lines: 0,
+            level: 1,
+            combo: 0
+        };
+
+        let dropCounter = 0;
+        let dropInterval = 1000;
+        let lastTime = 0;
+        let isGameOver = false;
+        let requestId = null; // 用於追蹤動畫訊號 ID
+
+        function collide(arena, player) {
+            const m = player.matrix;
+            const o = player.pos;
+            for (let y = 0; y < m.length; ++y) {
+                for (let x = 0; x < m[y].length; ++x) {
+                    if (m[y][x] !== 0 &&
+                       (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function merge(arena, player) {
+            player.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        arena[y + player.pos.y][x + player.pos.x] = value;
+                    }
+                });
+            });
+        }
+
+        function rotate(matrix, dir) {
+            for (let y = 0; y < matrix.length; ++y) {
+                for (let x = 0; x < y; ++x) {
+                    [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+                }
+            }
+            if (dir > 0) {
+                matrix.forEach(row => row.reverse());
+            } else {
+                matrix.reverse();
+            }
+        }
+
+        function playerRotate(dir) {
+            const pos = player.pos.x;
+            let offset = 1;
+            rotate(player.matrix, dir);
+            while (collide(arena, player)) {
+                player.pos.x += offset;
+                offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > player.matrix[0].length) {
+                    rotate(player.matrix, -dir);
+                    player.pos.x = pos;
+                    return;
+                }
+            }
+        }
+
+        function playerMove(offset) {
+            player.pos.x += offset;
+            if (collide(arena, player)) {
+                player.pos.x -= offset;
+            }
+        }
+
+        function triggerGameOver() {
+            isGameOver = true;
+            document.getElementById('final-score').innerText = player.score;
+            
+            const randomIndex = Math.floor(Math.random() * ENCOURAGEMENT_MESSAGES.length);
+            document.getElementById('encouragement-text').innerText = ENCOURAGEMENT_MESSAGES[randomIndex];
+            
+            document.getElementById('game-over-overlay').classList.remove('hidden');
+        }
+
+        function playerReset() {
+            const pieces = 'ILJOSZT';
+            player.matrix = createPiece(pieces[Math.floor(Math.random() * pieces.length)]);
+            player.pos.y = 0;
+            player.pos.x = Math.floor(COLS / 2) - Math.floor(player.matrix[0].length / 2);
+
+            if (collide(arena, player)) {
+                triggerGameOver();
+            }
+        }
+
+        function playerDrop() {
+            player.pos.y++;
+            if (collide(arena, player)) {
+                player.pos.y--;
+                merge(arena, player);
+                arenaSweep();
+                playerReset();
+                updateScore();
+            }
+            dropCounter = 0;
+        }
+
+        function hardDrop() {
+            while (!collide(arena, player)) {
+                player.pos.y++;
+                player.score += 2;
+            }
+            player.pos.y--;
+            merge(arena, player);
+            arenaSweep();
+            playerReset();
+            updateScore();
+            dropCounter = 0;
+        }
+
+        function arenaSweep() {
+            let rowCount = 0;
+            outer: for (let y = arena.length - 1; y >= 0; --y) {
+                for (let x = 0; x < arena[y].length; ++x) {
+                    if (arena[y][x] === 0) {
+                        continue outer;
+                    }
+                }
+
+                const row = arena.splice(y, 1)[0].fill(0);
+                arena.unshift(row);
+                ++y;
+                rowCount++;
+            }
+
+            if (rowCount > 0) {
+                player.combo++;
+                
+                const scoreTable = [0, 100, 300, 500, 800];
+                const baseScore = scoreTable[rowCount];
+                const comboBonus = (player.combo - 1) * 50; 
+                
+                player.score += (baseScore + comboBonus) * player.level;
+                player.lines += rowCount;
+                
+                player.level = Math.floor(player.lines / 10) + 1;
+                dropInterval = Math.max(100, 1000 - (player.level - 1) * 80);
+            } else {
+                player.combo = 0;
+            }
+        }
+
+        function updateScore() {
+            document.getElementById('score').innerText = player.score;
+            document.getElementById('lines').innerText = player.lines;
+            document.getElementById('level').innerText = player.level;
+            
+            const comboEl = document.getElementById('combo');
+            const comboContainer = document.getElementById('combo-box');
+            
+            if (player.combo > 0) {
+                comboEl.innerText = `x${player.combo}`;
+                comboContainer.classList.add('combo-active');
+            } else {
+                comboEl.innerText = '0';
+                comboContainer.classList.remove('combo-active');
+            }
+        }
+
+        function drawBlock(x, y, colorIndex, isGhost = false) {
+            if (isGhost) {
+                context.strokeStyle = COLORS[colorIndex];
+                context.lineWidth = 0.08;
+                context.strokeRect(x + 0.05, y + 0.05, 0.9, 0.9);
+                return;
+            }
+
+            context.fillStyle = COLORS[colorIndex];
+            context.fillRect(x, y, 1, 1);
+
+            context.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            context.fillRect(x, y, 1, 0.1);
+            context.fillRect(x, y, 0.1, 1);
+
+            context.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            context.fillRect(x, y + 0.9, 1, 0.1);
+            context.fillRect(x + 0.9, y, 0.1, 1);
+
+            context.strokeStyle = '#0d0d11';
+            context.lineWidth = 0.03;
+            context.strokeRect(x, y, 1, 1);
+        }
+
+        function drawMatrix(matrix, offset, isGhost = false) {
+            matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        drawBlock(x + offset.x, y + offset.y, value, isGhost);
+                    }
+                });
+            });
+        }
+
+        function drawGhost() {
+            const ghost = {
+                pos: { x: player.pos.x, y: player.pos.y },
+                matrix: player.matrix
+            };
+            while (!collide(arena, ghost)) {
+                ghost.pos.y++;
+            }
+            ghost.pos.y--;
+            drawMatrix(ghost.matrix, ghost.pos, true);
+        }
+
+        function draw() {
+            context.fillStyle = '#0d0d11';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            context.strokeStyle = '#181822';
+            context.lineWidth = 0.02;
+            for (let x = 0; x <= COLS; x++) {
+                context.beginPath();
+                context.moveTo(x, 0);
+                context.lineTo(x, ROWS);
+                context.stroke();
+            }
+            for (let y = 0; y <= ROWS; y++) {
+                context.beginPath();
+                context.moveTo(0, y);
+                context.lineTo(COLS, y);
+                context.stroke();
+            }
+
+            drawMatrix(arena, {x: 0, y: 0});
+
+            if (player.matrix && !isGameOver) {
+                drawGhost();
+                drawMatrix(player.matrix, player.pos);
+            }
+        }
+
+        function update(time = 0) {
+            if (isGameOver) return;
+
+            const deltaTime = time - lastTime;
+            lastTime = time;
+
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) {
+                playerDrop();
+            }
+
+            draw();
+            // 保存當前的 requestAnimationFrame ID
+            requestId = requestAnimationFrame(update);
+        }
+
+        function restartGame() {
+            // 如果當前已有進行中的動畫迴圈，強制終止它
+            if (requestId) {
+                cancelAnimationFrame(requestId);
+                requestId = null;
+            }
+
+            arena.forEach(row => row.fill(0));
+            player.score = 0;
+            player.lines = 0;
+            player.level = 1;
+            player.combo = 0;
+            dropInterval = 1000;
+            dropCounter = 0;
+            isGameOver = false;
+
+            document.getElementById('game-over-overlay').classList.add('hidden');
+            
+            updateScore();
+            playerReset();
+            lastTime = performance.now();
+            
+            // 啟動全新的單一動畫迴圈
+            requestId = requestAnimationFrame(update);
+        }
+
+        document.addEventListener('keydown', event => {
+            if (isGameOver) return;
+
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(event.key)) {
+                event.preventDefault();
+            }
+
+            if (event.key === 'ArrowLeft') {
+                playerMove(-1);
+            } else if (event.key === 'ArrowRight') {
+                playerMove(1);
+            } else if (event.key === 'ArrowDown') {
+                playerDrop();
+                player.score += 1;
+                updateScore();
+            } else if (event.key === 'ArrowUp') {
+                playerRotate(1);
+            } else if (event.key === ' ') {
+                hardDrop();
+            }
+        });
+
+        document.getElementById('restart-btn').addEventListener('click', restartGame);
+        document.getElementById('restart-overlay-btn').addEventListener('click', restartGame);
+
+        restartGame();
+    </script>
+</body>
+</html>
