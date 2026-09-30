@@ -80,6 +80,7 @@ function playerHardDropAction() {
 function drawBlock(x, y, colorIndex, isGhost = false) {
     const blocksImg = loadedAssets.images.blocks;
 
+    // 1. 繪製落點陰影 (Ghost)
     if (isGhost) {
         context.strokeStyle = COLORS[colorIndex];
         context.lineWidth = 0.08;
@@ -87,25 +88,24 @@ function drawBlock(x, y, colorIndex, isGhost = false) {
         return;
     }
 
+    // 2. 如果圖片存在，直接繪製整張方塊圖
     if (blocksImg) {
-        const spriteWidth = 32;
-        const spriteHeight = 32;
-        const spriteX = (colorIndex - 1) * spriteWidth;
-
-        context.drawImage(
-            blocksImg,
-            spriteX, 0, spriteWidth, spriteHeight,
-            x, y, 1, 1
-        );
+        context.drawImage(blocksImg, x, y, 1, 1);
     } else {
+        // 3. 備用方案：立體光澤方塊繪製
         context.fillStyle = COLORS[colorIndex];
         context.fillRect(x, y, 1, 1);
-        context.fillStyle = 'rgba(255, 255, 255, 0.35)';
-        context.fillRect(x, y, 1, 0.1);
-        context.fillRect(x, y, 0.1, 1);
-        context.fillStyle = 'rgba(0, 0, 0, 0.35)';
-        context.fillRect(x, y + 0.9, 1, 0.1);
-        context.fillRect(x + 0.9, y, 0.1, 1);
+
+        // 亮邊
+        context.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        context.fillRect(x, y, 1, 0.12);
+        context.fillRect(x, y, 0.12, 1);
+
+        // 暗邊
+        context.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        context.fillRect(x, y + 0.88, 1, 0.12);
+        context.fillRect(x + 0.88, y, 0.12, 1);
+
         context.strokeStyle = '#0d0d11';
         context.lineWidth = 0.03;
         context.strokeRect(x, y, 1, 1);
