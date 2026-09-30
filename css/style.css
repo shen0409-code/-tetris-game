@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>經典俄羅斯方塊 Tetris - 2D資產重構版</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="canvas-wrapper">
+            <!-- 資產載入中遮罩 -->
+            <div id="loading-overlay" class="overlay">
+                <div class="overlay-content">
+                    <h2>資產載入中...</h2>
+                    <p>請稍候，正在預載遊戲圖像與音效</p>
+                </div>
+            </div>
+
+            <canvas id="tetris" width="300" height="600"></canvas>
+            
+            <div id="game-over-overlay" class="overlay hidden">
+                <div class="overlay-content">
+                    <h2>GAME OVER</h2>
+                    <p class="score-text">最終得分：<span id="final-score">0</span></p>
+                    <p id="encouragement-text" class="encouragement-text">差一點！再挑戰一次吧！</p>
+                    <button id="restart-overlay-btn" class="btn">再次挑戰</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div>
+                <h1>TETRIS</h1>
+                
+                <div class="stat-box">
+                    <div class="stat-title">分數 SCORE</div>
+                    <div id="score" class="stat-value">0</div>
+                </div>
+
+                <div id="combo-box" class="stat-box">
+                    <div class="stat-title">連擊 COMBO</div>
+                    <div id="combo" class="stat-value combo-value">0</div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-title">消除行數 LINES</div>
+                    <div id="lines" class="stat-value">0</div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-title">等級 LEVEL</div>
+                    <div id="level" class="stat-value">1</div>
+                </div>
+
+                <!-- 音訊控制按鈕 -->
+                <div class="audio-controls">
+                    <button id="mute-btn" class="btn secondary-btn">🔊 音效：開啟</button>
+                </div>
+
+                <div class="controls-info">
+                    <h3>操作說明</h3>
+                    <ul>
+                        <li><span class="key">↑</span> 旋轉方塊</li>
+                        <li><span class="key">←</span> <span class="key">→</span> 左右移動</li>
+                        <li><span class="key">↓</span> 加速下降</li>
+                        <li><span class="key">Space</span> 直接落底</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <button id="restart-btn" class="btn">重新開始遊戲</button>
+                <!-- 作者標註資訊 (作業必要項目) -->
+                <div class="author-tag">遊戲製作人：沈相廷</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
