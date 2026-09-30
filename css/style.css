@@ -1,83 +1,213 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>經典俄羅斯方塊 Tetris - 2D資產重構版</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
-    <div class="game-container">
-        <div class="canvas-wrapper">
-            <!-- 資產載入中遮罩 -->
-            <div id="loading-overlay" class="overlay">
-                <div class="overlay-content">
-                    <h2>資產載入中...</h2>
-                    <p>請稍候，正在預載遊戲圖像與音效</p>
-                </div>
-            </div>
+body {
+    background-color: #121214;
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    user-select: none;
+}
 
-            <canvas id="tetris" width="300" height="600"></canvas>
-            
-            <div id="game-over-overlay" class="overlay hidden">
-                <div class="overlay-content">
-                    <h2>GAME OVER</h2>
-                    <p class="score-text">最終得分：<span id="final-score">0</span></p>
-                    <p id="encouragement-text" class="encouragement-text">差一點！再挑戰一次吧！</p>
-                    <button id="restart-overlay-btn" class="btn">再次挑戰</button>
-                </div>
-            </div>
-        </div>
+.game-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    background-color: #1e1e24;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid #2d2d38;
+}
 
-        <div class="side-panel">
-            <div>
-                <h1>TETRIS</h1>
-                
-                <div class="stat-box">
-                    <div class="stat-title">分數 SCORE</div>
-                    <div id="score" class="stat-value">0</div>
-                </div>
+.canvas-wrapper {
+    position: relative;
+}
 
-                <div id="combo-box" class="stat-box">
-                    <div class="stat-title">連擊 COMBO</div>
-                    <div id="combo" class="stat-value combo-value">0</div>
-                </div>
+canvas {
+    background-color: #0d0d11;
+    border: 2px solid #333344;
+    border-radius: 8px;
+    display: block;
+}
 
-                <div class="stat-box">
-                    <div class="stat-title">消除行數 LINES</div>
-                    <div id="lines" class="stat-value">0</div>
-                </div>
+.side-panel {
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    justify-content: space-between;
+}
 
-                <div class="stat-box">
-                    <div class="stat-title">等級 LEVEL</div>
-                    <div id="level" class="stat-value">1</div>
-                </div>
+h1 {
+    font-size: 24px;
+    text-align: center;
+    color: #00f0f0;
+    text-shadow: 0 0 8px rgba(0, 240, 240, 0.4);
+    margin-bottom: 10px;
+}
 
-                <!-- 音訊控制按鈕 -->
-                <div class="audio-controls">
-                    <button id="mute-btn" class="btn secondary-btn">🔊 音效：開啟</button>
-                </div>
+.stat-box {
+    background-color: #15151a;
+    border: 1px solid #2a2a35;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    text-align: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
 
-                <div class="controls-info">
-                    <h3>操作說明</h3>
-                    <ul>
-                        <li><span class="key">↑</span> 旋轉方塊</li>
-                        <li><span class="key">←</span> <span class="key">→</span> 左右移動</li>
-                        <li><span class="key">↓</span> 加速下降</li>
-                        <li><span class="key">Space</span> 直接落底</li>
-                    </ul>
-                </div>
-            </div>
+.stat-box.combo-active {
+    border-color: #ff0055;
+    box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+}
 
-            <div>
-                <button id="restart-btn" class="btn">重新開始遊戲</button>
-                <!-- 作者標註資訊 (作業必要項目) -->
-                <div class="author-tag">遊戲製作人：沈相廷</div>
-            </div>
-        </div>
-    </div>
+.stat-title {
+    font-size: 11px;
+    color: #aaaaaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
 
-    <script type="module" src="js/main.js"></script>
-</body>
-</html>
+.stat-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.combo-value {
+    color: #ffcc00;
+    font-size: 20px;
+}
+
+.audio-controls {
+    margin-bottom: 10px;
+}
+
+.controls-info {
+    background-color: #15151a;
+    border: 1px solid #2a2a35;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #cccccc;
+    line-height: 1.5;
+}
+
+.controls-info h3 {
+    font-size: 13px;
+    color: #ff7f00;
+    margin-bottom: 4px;
+}
+
+.controls-info ul {
+    list-style: none;
+}
+
+.key {
+    background-color: #2a2a35;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: monospace;
+    color: #fff;
+    font-size: 11px;
+}
+
+.btn {
+    background: linear-gradient(135deg, #ff0055, #ff5500);
+    border: none;
+    color: white;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    box-shadow: 0 4px 12px rgba(255, 0, 85, 0.3);
+    margin-top: 5px;
+    width: 100%;
+}
+
+.btn.secondary-btn {
+    background: linear-gradient(135deg, #2a2a38, #3b3b4f);
+    box-shadow: none;
+    border: 1px solid #444458;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.author-tag {
+    text-align: center;
+    font-size: 12px;
+    color: #00f0f0;
+    margin-top: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.88);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+    z-index: 10;
+}
+
+.overlay.hidden {
+    display: none;
+}
+
+.overlay-content {
+    text-align: center;
+    padding: 20px;
+}
+
+.overlay-content h2 {
+    font-size: 28px;
+    color: #ff3366;
+    margin-bottom: 12px;
+    text-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+}
+
+.overlay-content p.score-text {
+    font-size: 18px;
+    margin-bottom: 12px;
+    color: #ffffff;
+}
+
+.overlay-content p.encouragement-text {
+    font-size: 14px;
+    color: #ffcc00;
+    margin-bottom: 20px;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+@media (max-width: 550px) {
+    .game-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    .side-panel {
+        width: 300px;
+    }
+}
